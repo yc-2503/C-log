@@ -52,40 +52,39 @@
 #if (LOG_LEVEL >= LOG_INFO)
 	#define _log_debug(lh, format, ...)		UNUSED
 #else
-	#define _log_debug(lh, format, ...)		write_log(lh, LOG_DEBUG, format, __VA_ARGS__)
+	#define _log_debug(lh, format, ...)		write_log(lh, LOG_DEBUG, format,##__VA_ARGS__)
 #endif
 
 #if (LOG_LEVEL >= LOG_WARN)
 	#define _log_info(lh, format, ...)		UNUSED
 #else 
-	#define _log_info(lh, format, ...)		write_log(lh, LOG_INFO, format,  __VA_ARGS__)
+	#define _log_info(lh, format, ...)		write_log(lh, LOG_INFO, format,##__VA_ARGS__)
 #endif
 
 #if (LOG_LEVEL >= LOG_ERROR)
 	#define _log_warn(lh, format, ...)		UNUSED
 #else
-	#define _log_warn(lh, format, ...)		write_log(lh, LOG_WARN, format,  __VA_ARGS__)
+	#define _log_warn(lh, format, ...)		write_log(lh, LOG_WARN, format,##__VA_ARGS__)
 #endif
 
 #if (LOG_LEVEL >= LOG_CLOSE)
-	#define _log_error(lh, format, ...)		UNUSED
+	#define _log_error(lh, format,...)		UNUSED
 #else
-	#define _log_error(lh, format, ...)		write_log(lh, LOG_ERROR, format, __VA_ARGS__)
+	#define _log_error(lh, format,...)		write_log(lh, LOG_ERROR, format,##__VA_ARGS__)
 #endif
 
 #if (LOG_LEVEL == LOG_DEBUG)
 	#define _STR(x) _VAL(x)
 	#define _VAL(x) #x
-	#define write_log(lh, level, format,  ...)		_log_write(lh, level, format, _STR(__LINE__), __FILE__, __VA_ARGS__)
+	#define write_log(lh, level, format,...)		_log_write(lh, level, format, _STR(__LINE__), __FILE__,##__VA_ARGS__)
 #else
-	#define write_log(lh, level, format,  ...)		_log_write(lh, level, format, __VA_ARGS__)
+	#define write_log(lh, level, format,...)		_log_write(lh, level, format, ##__VA_ARGS__)
 #endif
 
 
 typedef struct
 {
 	uint8_t 		*wkey;
-	int    	    	cflag;
 	char 			*file_path;
 	FILE			*f_log;
 	char 			*io_buf;
@@ -96,8 +95,6 @@ typedef struct
 	size_t 			max_bak_num;
 	pthread_mutex_t mutex;
 } log_t;
-
-#define S_LOG_SIZE	sizeof(log_t)
 
 
 /*log level*/
@@ -110,15 +107,7 @@ typedef enum
 	_CLOSE = LOG_CLOSE
 } log_level_t;
 
-
-/* option for log handle create */
-#define NORMALIZE	0	//normal
-#define ENCRYPT		1	//log encryption
-#define COMPRESS	2	//log compress
-
-
 void _log_write(log_t *lh, const log_level_t level, const char *format, ...);
-
 
 /**
  * create the log handle.
@@ -133,7 +122,7 @@ void _log_write(log_t *lh, const log_level_t level, const char *format, ...);
  * @param password - works if cflag & ENCRYPT.
  * @return log handle if successful or return NULL
  */
-log_t* log_create(const char *log_filename, size_t max_file_size, size_t max_file_bak, size_t max_iobuf_size, int cflag, const char *password);
+log_t* log_create(const char *log_filename, size_t max_file_size, size_t max_file_bak, size_t max_iobuf_size);
 
 
 /**
@@ -141,13 +130,13 @@ log_t* log_create(const char *log_filename, size_t max_file_size, size_t max_fil
  * @param lh - log handle.
  * @param format - is similar to printf format.
  */
-#define log_debug(lh, format, ...)		_log_debug(lh, format, __VA_ARGS__)
+#define log_debug(lh, format, ...)		_log_debug(lh, format,##__VA_ARGS__)
 
-#define log_info(lh, format, ...)		_log_info(lh, format, __VA_ARGS__)
+#define log_info(lh, format, ...)		_log_info(lh, format,##__VA_ARGS__)
 
-#define log_warn(lh, format, ...)		_log_warn(lh, format, __VA_ARGS__)
+#define log_warn(lh, format, ...)		_log_warn(lh, format,##__VA_ARGS__)
 
-#define log_error(lh, format, ...)		_log_error(lh, format, __VA_ARGS__)
+#define log_error(lh, format, ...)		_log_error(lh, format,##__VA_ARGS__)
 
 
 /**
@@ -161,33 +150,6 @@ void log_flush(log_t *lh);
  * @param lh - log handle.
  */
 void log_destory(log_t *lh);
-
-
-/**
- * decipher log file, do not remove source file.
- * @param in_filename - source filename.
- * @param out_filename - destination filename
- * @param password - password
- */
-int log_decipher(const char *in_filename, const char *out_filename, const char *password);
-
-
-/**
- * uncompress log file, do not remove source file.
- * @param src_filename - source filename.
- * @param dst_filename - destination filename
- */
-int log_uncompress(const char *src_filename, const char *dst_filename);
-
-
-/**
- * md5 file.
- * @param filename - source filename.
- * @param digest - if digest is NULL, there will memory allocation.
- * if digest is not NULL, digest size must greater than (32+1('\0')) byte.
- * @return digest, a 32-character fixed-length string.
- */
-char* log_md5(const char *filename, char *digest);
 
 
 #endif	/*!_LOG_H_*/
