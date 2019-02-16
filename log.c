@@ -14,7 +14,7 @@
 #include "lz4_file.h"
 #include "log.h"
 
-
+#define MAX_PATH_LEN	60
 #define AES_128 	16
 
 #define aes_ex(n)	((n)%AES_128 != 0 ? ((n)/AES_128+1)*AES_128 : (n))
@@ -92,7 +92,30 @@ static int _file_init(log_t *lh, const char *lp, size_t ms, size_t mb)
 	lh->max_bak_num = mb;
 	return 0;
 }
+int _chk_path(const char *log_file_path)
+{
+	int len = strlen(log_file_path) + 1;
+	assert(len <= MAX_PATH_LEN);
+	char path[MAX_PATH_LEN];
+	strcpy(path, log_file_path);
 
+	int status;
+	for (int i = 0; i < len; i++)
+	{
+		if (path[i] == '/')
+		{
+			path[i] = '\0';
+			if (access(path, F_OK) != 0)
+			{
+				status = mkdir(path, 0777);
+				if (status)
+					return status;
+			}
+			path[i] = '/';
+		}
+	}
+	return 0;
+}
 
 log_t* log_create(const char *log_file_path, size_t max_file_size, size_t max_file_bak, size_t max_iobuf_size, int cflag, const char *password)
 {
